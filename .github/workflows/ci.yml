@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  firmware:
+    name: Firmware (testes nativos e ESP32)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ferramentas
+        run: pip install platformio ziglang
+      - name: Vetores do protocolo em dia
+        run: |
+          python protocol/gerar_vetores.py
+          git diff --exit-code protocol/vectors.json
+      - name: Testes nativos (Unity)
+        working-directory: firmware
+        run: pio test -e native
+      - name: Compilação para ESP32
+        working-directory: firmware
+        run: pio run -e esp32dev
+      - name: Núcleo em WebAssembly
+        run: |
+          python -m ziglang c++ -target wasm32-wasi -mexec-model=reactor -Os -std=c++17 -fno-exceptions -fno-rtti -Wall -Wextra -Werror -Ifirmware/lib/malha_core/src firmware/wasm/malha_wasm.cpp firmware/lib/malha_core/src/malha/*.cpp -o firmware-core.wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-esp32
+          path: firmware/.pio/build/esp32dev/firmware.bin
+
+  desktop:
+    name: Aplicativo desktop (Windows)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - name: Auditoria das dependências de produção
+        run: npm audit --omit=dev --audit-level=high
+      - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: malha-windows
+          path: |
+            desktop/release/Malha-Setup-*.exe
+            desktop/release/Malha-*-portatil.exe

@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci --no-fund
+      - run: npm test
+      - run: npm run dist
+      - name: Anexar executáveis à release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            desktop/release/Malha-Setup-*.exe
+            desktop/release/Malha-*-portatil.exe
+          fail_on_unmatched_files: true

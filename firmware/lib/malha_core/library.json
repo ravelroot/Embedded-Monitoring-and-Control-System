@@ -1,0 +1,11 @@
+{
+  "name": "malha_core",
+  "version": "1.0.0",
+  "description": "Hardware independent core of the Malha firmware: protocol, rules, sensors and settings",
+  "license": "MIT",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "flags": ["-std=gnu++17"]
+  }
+}

@@ -1,0 +1,45 @@
+appId: com.ravelroot.malha
+productName: Malha
+copyright: Copyright (c) 2026 Malha
+directories:
+  output: release
+  buildResources: assets
+files:
+  - dist/**/*
+  - package.json
+  - "!node_modules/@serialport/bindings-cpp/prebuilds/{android-*,darwin-*,linux-*,win32-arm64,win32-ia32}/**"
+  - "!node_modules/**/{README,CHANGELOG,HISTORY}*"
+  - "!node_modules/**/*.{md,map,ts,cc,h,gyp}"
+asar: true
+asarUnpack:
+  - "**/*.node"
+npmRebuild: false
+electronLanguages:
+  - pt-BR
+  - en-US
+compression: maximum
+afterPack: scripts/after-pack.cjs
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: assets/icon.ico
+  signAndEditExecutable: false
+  executableName: Malha
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Malha
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  installerLanguages: [pt_BR]
+  language: "1046"
+  artifactName: Malha-Setup-${version}.exe
+  deleteAppDataOnUninstall: false
+portable:
+  artifactName: Malha-${version}-portatil.exe
